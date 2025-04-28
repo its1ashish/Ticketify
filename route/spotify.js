@@ -77,4 +77,67 @@ router.get('/user-data', ensureAuthenticated, async (req, res) => {
   }
 });
 
+// 🔹 Route: Refresh and Update User Preference Data
+router.get('/refresh-user-data', ensureAuthenticated, async (req, res) => {
+  try {
+    const User = require('../models/User'); // Import User model
+    const accessToken = req.user.accessToken;
+
+    // Fetch user's top artists and tracks from Spotify
+    const [topArtists, topTracks] = await Promise.all([
+      axios.get('https://api.spotify.com/v1/me/top/artists', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }),
+      axios.get('https://api.spotify.com/v1/me/top/tracks', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }),
+    ]);
+
+    // Process artist data
+    const processedArtists = topArtists.data.items.map((artist, index) => ({
+      name: artist.name,
+      spotify_id: artist.id,
+      popularity: artist.popularity,
+      preference_rank: index + 1,
+      genres: artist.genres || []
+    }));
+
+    // Process track data
+    const processedTracks = topTracks.data.items.map((track, index) => ({
+      name: track.name,
+      spotify_id: track.id,
+      artists: track.artists.map(a => a.name),
+      preference_rank: index + 1
+    }));
+
+    // Find and update user in database
+    const user = await User.findOne({ spotify_id: req.user.profile.id });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Update user data
+    user.top_artists = processedArtists;
+    user.top_tracks = processedTracks;
+    user.last_preference_update = new Date();
+
+    // Calculate and update fan score
+    user.fan_score = user.calculateFanScore();
+
+    // Save updated user
+    await user.save();
+
+    res.status(200).json({ 
+      message: 'User preferences updated successfully',
+      fan_score: user.fan_score
+    });
+
+  } catch (err) {
+    console.error('Error refreshing user data', err);
+    res.status(500).json({ error: 'Failed to refresh user data' });
+  }
+});
+
 module.exports = router;
+

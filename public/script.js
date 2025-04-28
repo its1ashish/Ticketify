@@ -234,6 +234,7 @@ function setupBookButtons() {
 }
 
 // Fetch and Display Events from the database
+// Modified version of fetchEvents function with ranking based on user preferences
 async function fetchEvents() {
   try {
     const eventsContainer = document.getElementById('events-list');
@@ -252,13 +253,39 @@ async function fetchEvents() {
       upcomingEventsContainer.innerHTML = '<div class="loading">Loading events...</div>';
     }
     
+    // Fetch user's top artists to use for ranking
+    let topArtists = [];
+    try {
+      const artistRes = await fetch("/api/spotify/top-artists", { credentials: "include" });
+      if (artistRes.ok) {
+        const artistData = await artistRes.json();
+        if (artistData.items && artistData.items.length > 0) {
+          topArtists = artistData.items.map(artist => ({
+            name: artist.name.toLowerCase(),
+            popularity: artist.popularity,
+            // Higher index = less preferred (reversed ranking)
+            index: artistData.items.indexOf(artist)
+          }));
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching artist preferences:", err);
+      // Continue with unranked events if artist fetch fails
+    }
+    
+    // Fetch all events
     const response = await fetch('/api/events');
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
-    const events = await response.json();
+    let events = await response.json();
+    
+    // Rank events based on user's top artists if we have data
+    if (topArtists.length > 0) {
+      events = rankEventsByUserPreference(events, topArtists);
+    }
     
     // Clear loading state
     if (eventsContainer) {
@@ -283,12 +310,42 @@ async function fetchEvents() {
       // Create event card for the events section (horizontal layout)
       if (eventsContainer) {
         const eventCard = createEventCard(event, true);
+        
+        // Add a recommended badge if it matches user preferences
+        if (event.userRelevanceScore > 0) {
+          const badge = document.createElement('div');
+          badge.classList.add('recommendation-badge');
+          
+          // Different badge levels based on score
+          if (event.userRelevanceScore > 80) {
+            badge.classList.add('high-match');
+            badge.textContent = 'Top Match';
+          } else if (event.userRelevanceScore > 50) {
+            badge.classList.add('medium-match');
+            badge.textContent = 'Recommended';
+          } else if (event.userRelevanceScore > 0) {
+            badge.classList.add('low-match');
+            badge.textContent = 'Based on your taste';
+          }
+          
+          eventCard.querySelector('.event-details').prepend(badge);
+        }
+        
         eventsContainer.appendChild(eventCard);
       }
       
       // Only add the first 4 events to the upcoming events on home page
       if (upcomingEventsContainer && index < 4) {
         const upcomingEventCard = createEventCard(event, false);
+        
+        // Add a simplified recommendation badge for home page
+        if (event.userRelevanceScore > 50) {
+          const badge = document.createElement('div');
+          badge.classList.add('recommendation-badge');
+          badge.textContent = '★';
+          upcomingEventCard.appendChild(badge);
+        }
+        
         upcomingEventsContainer.appendChild(upcomingEventCard);
       }
     });
@@ -308,6 +365,57 @@ async function fetchEvents() {
     }
   }
 }
+
+/**
+ * Ranks events based on user's top artists from Spotify
+ * @param {Array} events - List of events to rank
+ * @param {Array} topArtists - User's top artists from Spotify
+ * @returns {Array} - Ranked events with added relevance score
+ */
+function rankEventsByUserPreference(events, topArtists) {
+  // Clone events to avoid modifying original data
+  const rankedEvents = [...events];
+  
+  // Calculate a relevance score for each event
+  rankedEvents.forEach(event => {
+    // Default score if no match
+    let relevanceScore = 0;
+    const eventArtist = event.artistName.toLowerCase();
+    
+    // Check if this event's artist is in user's top artists
+    const matchingArtist = topArtists.find(artist => 
+      eventArtist.includes(artist.name) || artist.name.includes(eventArtist)
+    );
+    
+    if (matchingArtist) {
+      // Calculate score based on artist position and popularity
+      // Lower index = higher preference, max score 100
+      const positionScore = Math.max(0, 100 - (matchingArtist.index * 5));
+      
+      // Popularity score (0-100 directly from Spotify)
+      const popularityScore = matchingArtist.popularity;
+      
+      // Combined score with position weighted more heavily than general popularity
+      relevanceScore = (positionScore * 0.7) + (popularityScore * 0.3);
+    }
+    
+    // Add the score to the event object
+    event.userRelevanceScore = Math.round(relevanceScore);
+  });
+  
+  // Sort events by relevance score (highest first)
+  rankedEvents.sort((a, b) => {
+    // If scores are equal, sort by date
+    if (b.userRelevanceScore === a.userRelevanceScore) {
+      return new Date(a.date) - new Date(b.date);
+    }
+    // Otherwise sort by score
+    return b.userRelevanceScore - a.userRelevanceScore;
+  });
+  
+  return rankedEvents;
+}
+
 
 // Helper function to create event cards
 function createEventCard(event, isHorizontal) {

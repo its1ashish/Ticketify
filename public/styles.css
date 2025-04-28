@@ -409,3 +409,53 @@ body {
   font-weight: bold;
   font-size: 1.1rem;
 }
+
+
+/* Recommendation Badge Styles */
+.recommendation-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: white;
+  background-color: #1db954; /* Spotify green */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 2;
+}
+
+/* Different match levels */
+.recommendation-badge.high-match {
+  background-color: #1db954; /* Spotify green for top matches */
+}
+
+.recommendation-badge.medium-match {
+  background-color: #1e90ff; /* Blue for medium matches */
+}
+
+.recommendation-badge.low-match {
+  background-color: #9370db; /* Purple for low matches */
+}
+
+/* Make sure event cards have relative positioning for badge placement */
+.event-card {
+  position: relative;
+}
+
+/* Badge for homepage smaller events */
+.event-list:not(.horizontal-list) .recommendation-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  padding: 3px 8px;
+  font-size: 1.2rem;
+  background-color: #ffd700; /* Gold star */
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -10,16 +10,17 @@ const Event = require('./models/Event');
 
 // Event image URLs (placeholder URLs - replace with actual image URLs)
 const eventImages = [
-  'public/images/Arijit_Singh.avif',
-  'public/images/Neha_kakkar.jpeg',
-  'public/images/badshah.webp',
-  'public/images/AR_Rahman.jpg',
-  'public/images/Shreya_ghosal.avif',
-  'public/images/Divine.webp',
-  'public/images/Sonu_Nigam.jpg',
-  'public/images/Mohit_chauhan.jpeg',
-  '/images/concert5.jpg',
-];
+    '/images/Arijit_Singh.avif',
+    '/images/Neha_kakkar.jpeg',
+    '/images/badshah.webp',
+    '/images/AR_Rahman.jpg',
+    '/images/Shreya_ghosal.avif',
+    '/images/Divine.webp',
+    '/images/Sonu_Nigam.jpg',
+    '/images/Mohit_chauhan.jpeg',
+    '/images/concert5.jpg',
+  ];
+
 
 // Fake events data
 const fakeEvents = [

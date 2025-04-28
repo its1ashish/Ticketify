@@ -10,11 +10,15 @@ const Event = require('./models/Event');
 
 // Event image URLs (placeholder URLs - replace with actual image URLs)
 const eventImages = [
-  '/images/concert1.jpg',
-  '/images/concert2.jpg',
-  '/images/concert3.jpg',
-  '/images/concert4.jpg',
-  '/images/concert5.jpg'
+  'public/images/Arijit_Singh.avif',
+  'public/images/Neha_kakkar.jpeg',
+  'public/images/badshah.webp',
+  'public/images/AR_Rahman.jpg',
+  'public/images/Shreya_ghosal.avif',
+  'public/images/Divine.webp',
+  'public/images/Sonu_Nigam.jpg',
+  'public/images/Mohit_chauhan.jpeg',
+  '/images/concert5.jpg',
 ];
 
 // Fake events data
@@ -83,7 +87,7 @@ const fakeEvents = [
     ticketPrice: 1600,
     totalTickets: 800,
     availableTickets: 800,
-    imageUrl: eventImages[0] || '/images/concert-placeholder.jpg'
+    imageUrl: eventImages[5] || '/images/concert-placeholder.jpg'
   },
   {
     eventId: 'event7',
@@ -94,7 +98,19 @@ const fakeEvents = [
     ticketPrice: 2200,
     totalTickets: 1100,
     availableTickets: 980,
-    imageUrl: eventImages[1] || '/images/concert-placeholder.jpg'
+    imageUrl: eventImages[6] || '/images/concert-placeholder.jpg'
+  },
+
+  {
+    eventId: 'event8',
+    artistName: 'Mohit Chauhan',
+    eventName: 'Sonu Nigam Unplugged',
+    date: new Date('2024-02-10T19:00:00'),
+    venue: 'Kolkata Stadium',
+    ticketPrice: 2200,
+    totalTickets: 1100,
+    availableTickets: 980,
+    imageUrl: eventImages[7] || '/images/concert-placeholder.jpg'
   }
 ];
 

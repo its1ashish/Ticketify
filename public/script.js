@@ -10,6 +10,21 @@ function generateQR(text) {
   }
 }
 
+// Cache for data to prevent redundant fetches
+const dataCache = {
+  events: null,
+  userProfile: null,
+  topArtists: null,
+  topTracks: null
+};
+
+// Track if data is being loaded to prevent duplicate requests
+const loadingStatus = {
+  events: false,
+  userData: false,
+  spotifyData: false
+};
+
 // Document ready event handler
 document.addEventListener("DOMContentLoaded", async () => {
   // Only generate QR code if needed
@@ -18,6 +33,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // Sidebar Toggle Functionality
+  setupSidebar();
+  
+  // Set up navigation links
+  setupNavLinks();
+  
+  // Set up modals
+  setupModals();
+  
+  // Load all data with proper sequencing
+  await loadAllData();
+});
+
+// Setup sidebar functionality
+function setupSidebar() {
   const sidebarToggle = document.getElementById('sidebar-toggle');
   const sidebar = document.querySelector('.sidebar');
   const mainContent = document.querySelector('.main-content');
@@ -37,22 +66,23 @@ document.addEventListener("DOMContentLoaded", async () => {
       mainContent.classList.remove('sidebar-open');
     });
   }
+}
 
-  // Set up navigation links
-  setupNavLinks();
-  
-  // Set up modals
-  setupModals();
-  
-  // Fetch user data and content
+// Coordinate all data loading with proper sequencing
+async function loadAllData() {
   try {
+    // First load user data (authentication info)
     await fetchUserData();
-    await fetchEvents();
-    await fetchSpotifyData();
+    
+    // Then load events and Spotify data in parallel
+    await Promise.all([
+      fetchEvents(),
+      fetchSpotifyData()
+    ]);
   } catch (error) {
     console.error("Error initializing data:", error);
   }
-});
+}
 
 // Function to switch between sections
 function showSection(sectionId) {
@@ -144,11 +174,20 @@ function setupBookButtons() {
       }
       
       try {
-        // Fetch event details
-        const response = await fetch(`/api/events/${eventId}`);
-        if (!response.ok) throw new Error('Failed to fetch event details');
+        // Try to use cached event data if available
+        let event;
+        const cachedEvents = dataCache.events;
         
-        const event = await response.json();
+        if (cachedEvents) {
+          event = cachedEvents.find(e => e.eventId === eventId);
+        }
+        
+        // Fetch if not in cache
+        if (!event) {
+          const response = await fetch(`/api/events/${eventId}`);
+          if (!response.ok) throw new Error('Failed to fetch event details');
+          event = await response.json();
+        }
         
         // Populate modal with event details
         document.getElementById('booking-event-name').textContent = event.eventName;
@@ -182,12 +221,20 @@ function setupBookButtons() {
     quantityInput.addEventListener('change', async () => {
       const eventId = document.getElementById('booking-event-id').value;
       try {
-        const response = await fetch(`/api/events/${eventId}`);
-        if (!response.ok) throw new Error('Failed to fetch event details');
+        let event;
+        const cachedEvents = dataCache.events;
         
-        const event = await response.json();
+        if (cachedEvents) {
+          event = cachedEvents.find(e => e.eventId === eventId);
+        }
+        
+        if (!event) {
+          const response = await fetch(`/api/events/${eventId}`);
+          if (!response.ok) throw new Error('Failed to fetch event details');
+          event = await response.json();
+        }
+        
         const quantity = quantityInput.value;
-        
         document.getElementById('ticket-total').textContent = (quantity * event.ticketPrice).toFixed(2);
       } catch (error) {
         console.error('Error updating price:', error);
@@ -222,6 +269,9 @@ function setupBookButtons() {
         alert('Tickets booked successfully!');
         modal.style.display = 'none';
         
+        // Clear cache to get fresh data
+        dataCache.events = null;
+        
         // Refresh events display
         fetchEvents();
         
@@ -234,14 +284,18 @@ function setupBookButtons() {
 }
 
 // Fetch and Display Events from the database
-// Modified version of fetchEvents function with ranking based on user preferences
 async function fetchEvents() {
+  // Prevent duplicate fetches
+  if (loadingStatus.events) return;
+  loadingStatus.events = true;
+  
   try {
     const eventsContainer = document.getElementById('events-list');
     const upcomingEventsContainer = document.getElementById('upcoming-events');
     
     if (!eventsContainer && !upcomingEventsContainer) {
       console.log('No event containers found, skipping event fetch');
+      loadingStatus.events = false;
       return;
     }
     
@@ -253,34 +307,39 @@ async function fetchEvents() {
       upcomingEventsContainer.innerHTML = '<div class="loading">Loading events...</div>';
     }
     
-    // Fetch user's top artists to use for ranking
+    // Use cached topArtists if available, otherwise fetch them
     let topArtists = [];
-    try {
-      const artistRes = await fetch("/api/spotify/top-artists", { credentials: "include" });
-      if (artistRes.ok) {
-        const artistData = await artistRes.json();
-        if (artistData.items && artistData.items.length > 0) {
-          topArtists = artistData.items.map(artist => ({
-            name: artist.name.toLowerCase(),
-            popularity: artist.popularity,
-            // Higher index = less preferred (reversed ranking)
-            index: artistData.items.indexOf(artist)
-          }));
+    if (dataCache.topArtists) {
+      topArtists = dataCache.topArtists;
+    } else {
+      try {
+        const artistRes = await fetch("/api/spotify/top-artists", { credentials: "include" });
+        if (artistRes.ok) {
+          const artistData = await artistRes.json();
+          if (artistData.items && artistData.items.length > 0) {
+            topArtists = artistData.items.map(artist => ({
+              name: artist.name.toLowerCase(),
+              popularity: artist.popularity,
+              index: artistData.items.indexOf(artist)
+            }));
+            dataCache.topArtists = topArtists;
+          }
         }
+      } catch (err) {
+        console.error("Error fetching artist preferences:", err);
       }
-    } catch (err) {
-      console.error("Error fetching artist preferences:", err);
-      // Continue with unranked events if artist fetch fails
     }
     
-    // Fetch all events
-    const response = await fetch('/api/events');
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    // Use cached events if available, otherwise fetch them
+    let events = dataCache.events;
+    if (!events) {
+      const response = await fetch('/api/events');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      events = await response.json();
+      dataCache.events = events;
     }
-    
-    let events = await response.json();
     
     // Rank events based on user's top artists if we have data
     if (topArtists.length > 0) {
@@ -302,6 +361,7 @@ async function fetchEvents() {
       if (upcomingEventsContainer) {
         upcomingEventsContainer.innerHTML = '<div class="empty-state">No upcoming events</div>';
       }
+      loadingStatus.events = false;
       return;
     }
     
@@ -363,15 +423,12 @@ async function fetchEvents() {
       document.getElementById('upcoming-events').innerHTML = 
         '<div class="empty-state">Failed to load events. Please try again later.</div>';
     }
+  } finally {
+    loadingStatus.events = false;
   }
 }
 
-/**
- * Ranks events based on user's top artists from Spotify
- * @param {Array} events - List of events to rank
- * @param {Array} topArtists - User's top artists from Spotify
- * @returns {Array} - Ranked events with added relevance score
- */
+// Ranks events based on user's top artists from Spotify
 function rankEventsByUserPreference(events, topArtists) {
   // Clone events to avoid modifying original data
   const rankedEvents = [...events];
@@ -416,19 +473,20 @@ function rankEventsByUserPreference(events, topArtists) {
   return rankedEvents;
 }
 
-
 // Helper function to create event cards
 function createEventCard(event, isHorizontal) {
   const eventCard = document.createElement('div');
   eventCard.classList.add('event-card');
   
-  // Use a default image if none is provided
-  const imageUrl = event.imageUrl || '/images/concert-placeholder.jpg';
+  // Ensure image path is properly formatted
+  let imageUrl = event.imageUrl || '/images/concert-placeholder.jpg';
+  // Remove 'public/' prefix if it exists - this is the core fix for image loading
+  imageUrl = imageUrl.replace('public/', '');
   
   if (isHorizontal) {
     // Horizontal layout for events page
     eventCard.innerHTML = `
-      <img src="${imageUrl}" alt="${event.eventName}">
+      <img src="${imageUrl}" alt="${event.eventName}" onerror="this.src='/images/concert-placeholder.jpg'">
       <div class="event-details">
         <h4>${event.eventName}</h4>
         <p><strong>Artist:</strong> ${event.artistName}</p>
@@ -442,7 +500,7 @@ function createEventCard(event, isHorizontal) {
   } else {
     // Vertical layout for homepage
     eventCard.innerHTML = `
-      <img src="${imageUrl}" alt="${event.eventName}">
+      <img src="${imageUrl}" alt="${event.eventName}" onerror="this.src='/images/concert-placeholder.jpg'">
       <h4>${event.eventName}</h4>
       <p>${event.artistName}</p>
       <p>${formatDate(event.date)}</p>
@@ -456,7 +514,18 @@ function createEventCard(event, isHorizontal) {
 
 // Fetch User Data from server
 async function fetchUserData() {
+  // Prevent duplicate fetches
+  if (loadingStatus.userData) return;
+  loadingStatus.userData = true;
+  
   try {
+    // Use cached data if available
+    if (dataCache.userProfile) {
+      updateUserInterface(dataCache.userProfile);
+      loadingStatus.userData = false;
+      return;
+    }
+    
     // Fetch User Data
     const userRes = await fetch("/debug", { credentials: "include" });
     if (!userRes.ok) {
@@ -464,100 +533,138 @@ async function fetchUserData() {
     }
     
     const userData = await userRes.json();
+    
+    // Cache the user data
+    dataCache.userProfile = userData;
 
     if (!userData.user || userData.user === "No user in session") {
       console.log("No user data found, user may need to log in");
+      loadingStatus.userData = false;
       return;
     }
 
-    // Update User Profile Section
-    if (userData.user.profile) {
-      const { profile } = userData.user;
-      
-      // Update username if element exists
-      const usernameElement = document.getElementById("username");
-      if (usernameElement) {
-        usernameElement.innerText = `Welcome, ${profile.displayName || "User"}`;
-      }
-      
-      // Update user email if element exists
-      const userEmailElement = document.getElementById("user-email");
-      if (userEmailElement) {
-        userEmailElement.innerText = profile.emails?.[0]?.value || "Gold Member";
-      }
-      
-      // Update profile name if element exists
-      const profileNameElement = document.getElementById("profile-name");
-      if (profileNameElement) {
-        profileNameElement.innerText = profile.displayName || "User";
-      }
-      
-      // Update profile email if element exists
-      const profileEmailElement = document.getElementById("profile-email");
-      if (profileEmailElement) {
-        profileEmailElement.innerText = profile.emails?.[0]?.value || "Not available";
-      }
-      
-      // Set avatar with a fallback
-      const avatarUrl = profile.photos?.[0]?.value || "/images/avatar-placeholder.jpg";
-      
-      const avatarElement = document.getElementById("user-avatar");
-      if (avatarElement) {
-        avatarElement.src = avatarUrl;
-        avatarElement.onerror = function() {
-          this.src = "/images/avatar-placeholder.jpg";
-        };
-      }
-      
-      const profileAvatarElement = document.getElementById("profile-avatar");
-      if (profileAvatarElement) {
-        profileAvatarElement.src = avatarUrl;
-        profileAvatarElement.onerror = function() {
-          this.src = "/images/avatar-placeholder.jpg";
-        };
-      }
-    }
-
+    // Update UI with user data
+    updateUserInterface(userData);
+    
   } catch (err) {
     console.error("Error fetching user data:", err);
+  } finally {
+    loadingStatus.userData = false;
+  }
+}
+
+// Update user interface elements with profile data
+function updateUserInterface(userData) {
+  if (!userData.user || !userData.user.profile) return;
+  
+  const { profile } = userData.user;
+  
+  // Update username if element exists
+  const usernameElement = document.getElementById("username");
+  if (usernameElement) {
+    usernameElement.innerText = `Welcome, ${profile.displayName || "User"}`;
+  }
+  
+  // Update user email if element exists
+  const userEmailElement = document.getElementById("user-email");
+  if (userEmailElement) {
+    userEmailElement.innerText = profile.emails?.[0]?.value || "Gold Member";
+  }
+  
+  // Update profile name if element exists
+  const profileNameElement = document.getElementById("profile-name");
+  if (profileNameElement) {
+    profileNameElement.innerText = profile.displayName || "User";
+  }
+  
+  // Update profile email if element exists
+  const profileEmailElement = document.getElementById("profile-email");
+  if (profileEmailElement) {
+    profileEmailElement.innerText = profile.emails?.[0]?.value || "Not available";
+  }
+  
+  // Set avatar with a fallback
+  const avatarUrl = profile.photos?.[0]?.value || "/images/user_icon.webp";
+  
+  // Pre-load the avatar image to prevent blinking
+  const preloadAvatar = new Image();
+  preloadAvatar.onload = function() {
+    // Only update UI after image has successfully loaded
+    updateAvatarElements(avatarUrl);
+  };
+  preloadAvatar.onerror = function() {
+    // Use fallback image
+    updateAvatarElements("/images/user_icon.webp");
+  };
+  preloadAvatar.src = avatarUrl;
+}
+
+// Update all avatar elements with the given URL
+function updateAvatarElements(avatarUrl) {
+  const avatarElement = document.getElementById("user-avatar");
+  if (avatarElement) {
+    avatarElement.src = avatarUrl;
+    avatarElement.onerror = function() {
+      this.src = "/images/user_icon.webp";
+    };
+  }
+  
+  const profileAvatarElement = document.getElementById("profile-avatar");
+  if (profileAvatarElement) {
+    profileAvatarElement.src = avatarUrl;
+    profileAvatarElement.onerror = function() {
+      this.src = "/images/user_icon.webp";
+    };
   }
 }
 
 // Fetch Spotify Data (Top Artists and Tracks)
 async function fetchSpotifyData() {
+  // Prevent duplicate fetches
+  if (loadingStatus.spotifyData) return;
+  loadingStatus.spotifyData = true;
+  
+  await fetchTopArtists();
+  await fetchTopTracks();
+  updateFanScore();
+  
+  loadingStatus.spotifyData = false;
+}
+
+// Fetch top artists separately
+async function fetchTopArtists() {
   // Fetch Top Artists
   try {
+    const artistList = document.getElementById("top-artists");
+    if (!artistList) return;
+    
+    artistList.innerHTML = '<div class="loading">Loading top artists...</div>';
+    
+    // Use cached data if available
+    if (dataCache.topArtists) {
+      displayTopArtists(dataCache.topArtists, artistList);
+      return;
+    }
+    
     const artistRes = await fetch("/api/spotify/top-artists", { credentials: "include" });
     if (!artistRes.ok) {
       throw new Error(`HTTP error! Status: ${artistRes.status}`);
     }
     
     const artistData = await artistRes.json();
-    const artistList = document.getElementById("top-artists");
     
-    if (artistList) {
-      artistList.innerHTML = ''; // Clear any existing content
+    if (artistData.items && artistData.items.length > 0) {
+      // Cache data for future use
+      dataCache.topArtists = artistData.items.map(artist => ({
+        name: artist.name.toLowerCase(),
+        popularity: artist.popularity,
+        images: artist.images,
+        index: artistData.items.indexOf(artist)
+      }));
       
-      if (artistData.items && artistData.items.length > 0) {
-        artistData.items.forEach(artist => {
-          const artistItem = document.createElement("div");
-          artistItem.classList.add("event-card");
-          
-          // Get the first image or use a placeholder
-          const imageUrl = artist.images && artist.images.length > 0 
-            ? artist.images[0].url 
-            : '/images/artist-placeholder.jpg';
-            
-          artistItem.innerHTML = `
-            <img src="${imageUrl}" alt="${artist.name}">
-            <h4>${artist.name}</h4>
-            <p>Popularity: ${artist.popularity}</p>
-          `;
-          artistList.appendChild(artistItem);
-        });
-      } else {
-        artistList.innerHTML = '<div class="empty-state">No top artists found</div>';
-      }
+      displayTopArtists(artistData.items, artistList);
+    } else {
+      artistList.innerHTML = '<div class="empty-state">No top artists found</div>';
     }
   } catch (artistError) {
     console.error("Error fetching top artists:", artistError);
@@ -566,40 +673,63 @@ async function fetchSpotifyData() {
       artistList.innerHTML = '<div class="empty-state">Could not load artist data</div>';
     }
   }
+}
+
+// Display top artists
+function displayTopArtists(artists, container) {
+  container.innerHTML = '';
   
-  // Fetch Top Tracks
+  if (!artists || artists.length === 0) {
+    container.innerHTML = '<div class="empty-state">No top artists found</div>';
+    return;
+  }
+  
+  artists.forEach(artist => {
+    const artistItem = document.createElement("div");
+    artistItem.classList.add("event-card");
+    
+    // Get the first image or use a placeholder
+    const imageUrl = artist.images && artist.images.length > 0 
+      ? artist.images[0].url 
+      : '/images/artist-placeholder.jpg';
+      
+    artistItem.innerHTML = `
+      <img src="${imageUrl}" alt="${artist.name}" onerror="this.src='/images/artist-placeholder.jpg'">
+      <h4>${artist.name}</h4>
+      <p>Popularity: ${artist.popularity}</p>
+    `;
+    container.appendChild(artistItem);
+  });
+}
+
+// Fetch top tracks separately
+async function fetchTopTracks() {
   try {
+    const trackList = document.getElementById("top-tracks");
+    if (!trackList) return;
+    
+    trackList.innerHTML = '<div class="loading">Loading top tracks...</div>';
+    
+    // Use cached data if available
+    if (dataCache.topTracks) {
+      displayTopTracks(dataCache.topTracks, trackList);
+      return;
+    }
+    
     const trackRes = await fetch("/api/spotify/top-tracks", { credentials: "include" });
     if (!trackRes.ok) {
       throw new Error(`HTTP error! Status: ${trackRes.status}`);
     }
     
     const trackData = await trackRes.json();
-    const trackList = document.getElementById("top-tracks");
     
-    if (trackList) {
-      trackList.innerHTML = ''; // Clear any existing content
+    if (trackData.items && trackData.items.length > 0) {
+      // Cache data for future use
+      dataCache.topTracks = trackData.items;
       
-      if (trackData.items && trackData.items.length > 0) {
-        trackData.items.forEach(track => {
-          const trackItem = document.createElement("div");
-          trackItem.classList.add("event-card");
-          
-          // Get the first album image or use a placeholder
-          const imageUrl = track.album && track.album.images && track.album.images.length > 0 
-            ? track.album.images[0].url 
-            : '/images/track-placeholder.jpg';
-            
-          trackItem.innerHTML = `
-            <img src="${imageUrl}" alt="${track.name}">
-            <h4>${track.name}</h4>
-            <p>Artist: ${track.artists && track.artists.length > 0 ? track.artists[0].name : 'Unknown'}</p>
-          `;
-          trackList.appendChild(trackItem);
-        });
-      } else {
-        trackList.innerHTML = '<div class="empty-state">No top tracks found</div>';
-      }
+      displayTopTracks(trackData.items, trackList);
+    } else {
+      trackList.innerHTML = '<div class="empty-state">No top tracks found</div>';
     }
   } catch (trackError) {
     console.error("Error fetching top tracks:", trackError);
@@ -608,15 +738,59 @@ async function fetchSpotifyData() {
       trackList.innerHTML = '<div class="empty-state">Could not load track data</div>';
     }
   }
+}
 
-  // Try to calculate fan score
+// Display top tracks
+function displayTopTracks(tracks, container) {
+  container.innerHTML = '';
+  
+  if (!tracks || tracks.length === 0) {
+    container.innerHTML = '<div class="empty-state">No top tracks found</div>';
+    return;
+  }
+  
+  tracks.forEach(track => {
+    const trackItem = document.createElement("div");
+    trackItem.classList.add("event-card");
+    
+    // Get the first album image or use a placeholder
+    const imageUrl = track.album && track.album.images && track.album.images.length > 0 
+      ? track.album.images[0].url 
+      : '/images/track-placeholder.jpg';
+      
+    trackItem.innerHTML = `
+      <img src="${imageUrl}" alt="${track.name}" onerror="this.src='/images/track-placeholder.jpg'">
+      <h4>${track.name}</h4>
+      <p>Artist: ${track.artists && track.artists.length > 0 ? track.artists[0].name : 'Unknown'}</p>
+    `;
+    container.appendChild(trackItem);
+  });
+}
+
+// Update fan score
+function updateFanScore() {
   try {
     const fanScoreElement = document.getElementById('fan-score');
     if (fanScoreElement) {
-      // This would typically come from your user profile or be calculated
-      // For now we'll just set a placeholder value
-      const randomScore = Math.floor(Math.random() * 50) + 50; // Random score between 50-100
-      fanScoreElement.textContent = randomScore;
+      // Calculate based on cached data if possible
+      if (dataCache.topArtists && dataCache.topTracks) {
+        // Calculate based on popularity of top artists and tracks
+        let score = 0;
+        
+        dataCache.topArtists.forEach((artist, index) => {
+          score += (artist.popularity || 0) * (20 - index) / 10;
+        });
+        
+        dataCache.topTracks.forEach((track, index) => {
+          score += (track.popularity || 0) * (20 - index) / 20;
+        });
+        
+        fanScoreElement.textContent = Math.round(score);
+      } else {
+        // Otherwise use a placeholder value
+        const randomScore = Math.floor(Math.random() * 50) + 50;
+        fanScoreElement.textContent = randomScore;
+      }
     }
   } catch (err) {
     console.error("Error setting fan score:", err);

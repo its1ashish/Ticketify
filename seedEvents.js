@@ -194,7 +194,7 @@ const fakeEvents = [
     eventName: 'Mika Singh Punjabi Night',
     date: new Date('2025-04-20T20:00:00'),
     venue: 'Amritsar Music Arena',
-    ticketPrice: 1999,
+    ticketPrice: 2000,
     totalTickets: 1100,
     availableTickets: 1000,
     imageUrl: eventImages[14] || '/images/concert-placeholder.jpg'

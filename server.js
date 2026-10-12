@@ -14,8 +14,8 @@ const connectDB = require('./db');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB
-connectDB();
+// // Connect to MongoDB
+// connectDB();
 
 // Middleware
 app.use(express.json());
@@ -26,10 +26,14 @@ app.use(cors({ origin: "http://localhost:5000", credentials: true }));
 // Session Setup
 app.use(
   session({
-    secret: "your-secret-key",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false }, // Set to `true` if using HTTPS
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      sameSite: "lax"
+    },
   })
 );
 
@@ -42,7 +46,7 @@ passport.use(
     {
       clientID: process.env.SPOTIFY_CLIENT_ID,
       clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-      callbackURL: "http://localhost:5000/auth/spotify/callback",
+      callbackURL: process.env.SPOTIFY_CALLBACK_URL,
     },
     async (accessToken, refreshToken, expires_in, profile, done) => {
       try {
@@ -177,7 +181,20 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// Start server only after MongoDB connects
+async function startServer() {
+  try {
+    await connectDB();
+
+    app.set("trust proxy", 1);
+
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server listening on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+}
+
+startServer();

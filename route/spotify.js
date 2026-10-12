@@ -69,7 +69,10 @@ router.get('/user-data', ensureAuthenticated, async (req, res) => {
     };
 
     // Save user data to MongoDB
-    const saveResponse = await axios.post('http://localhost:5000/save-user-data', userData);
+    const saveResponse = await axios.post(
+      `${process.env.APP_URL}/save-user-data`,
+      userData
+    );
     res.status(200).json(saveResponse.data);
   } catch (err) {
     console.error('Error fetching or saving user data', err);

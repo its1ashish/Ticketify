@@ -13,8 +13,6 @@ Ticketify is a web application for discovering music events and exploring concer
 - **MongoDB persistence:** Store event records in MongoDB.
 - **REST API:** Retrieve event data through the Express backend.
 
-> Confirm which booking, payment, and user-account flows are implemented before describing them as production-ready features.
-
 ## Tech Stack
 
 - **Backend:** Node.js, Express.js
@@ -36,7 +34,7 @@ ticketify/
 ├── server.js
 ├── package.json
 ├── package-lock.json
-└── .env                 # Local secrets; do not commit
+└── .env               
 ```
 
 Your repository may contain additional frontend, authentication, or view files. Keep those in this overview if applicable.

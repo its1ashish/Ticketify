@@ -2,8 +2,8 @@ require("dotenv").config();
 const mongoose = require('mongoose');
 const connectDB = require('./db');
 
-// Connect to MongoDB
-connectDB();
+// // Connect to MongoDB
+// connectDB();
 
 // Import Event model
 const Event = require('./models/Event');
@@ -366,29 +366,33 @@ const fakeEvents = [
   },
 ];
 
-// Function to seed database
+
+ // Function to seed database
 async function seedDatabase() {
   try {
-    // Clear existing events
+    await connectDB();
+
+    // Clear existing events, then insert sample data.
     await Event.deleteMany({});
     console.log('Cleared existing events from database');
-    
-    // Insert new events
+
     const result = await Event.insertMany(fakeEvents);
     console.log(`Successfully seeded ${result.length} events to database`);
-    
-    // Display all events
-    const allEvents = await Event.find({});
+
+    const allEvents = await Event.find({}).sort({ date: 1 });
     console.log('All events in database:');
+
     allEvents.forEach(event => {
-      console.log(`- ${event.eventName} by ${event.artistName} on ${event.formattedDate}`);
+      console.log(
+        `- ${event.eventName} by ${event.artistName} on ${event.formattedDate}`
+      );
     });
-    
-    mongoose.connection.close();
-    console.log('Database connection closed');
   } catch (error) {
     console.error('Error seeding database:', error);
-    mongoose.connection.close();
+    process.exitCode = 1;
+  } finally {
+    await mongoose.disconnect();
+    console.log('Database connection closed');
   }
 }
 

@@ -50,7 +50,7 @@ function rankEventsByUserPreference(events, topArtists) {
   rankedEvents.forEach(event => {
     // Default score if no match
     let relevanceScore = 0;
-    const eventArtist = event.artistName.toLowerCase();
+    const eventArtist = (event.artistName || "").toLowerCase();
     
     // Check if this event's artist is in user's top artists
     const matchingArtistIndex = topArtists.findIndex(artist => 

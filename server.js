@@ -12,7 +12,7 @@ const mongoose = require("mongoose");
 const connectDB = require('./db');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // // Connect to MongoDB
 // connectDB();
@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
-app.use(cors({ origin: "http://localhost:5000", credentials: true }));
+app.use(cors({ origin: "http://localhost:5001", credentials: true }));
 
 // Session Setup
 app.use(

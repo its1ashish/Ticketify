@@ -796,3 +796,91 @@ function updateFanScore() {
     console.error("Error setting fan score:", err);
   }
 }
+// UI refresh: search, category chips, and quick links for event discovery.
+function setupDiscoveryUI() {
+  const search = document.getElementById('event-search');
+  const categoryButtons = Array.from(document.querySelectorAll('.category-chip'));
+  let activeCategory = 'all';
+
+  function filterEvents() {
+    const query = (search?.value || '').trim().toLowerCase();
+    const cards = Array.from(document.querySelectorAll('#events-list .event-card, #upcoming-events .event-card'));
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      const text = (card.textContent || '').toLowerCase();
+      const matchesSearch = !query || text.includes(query);
+      let matchesCategory = true;
+      if (activeCategory === 'concert') matchesCategory = /concert|live|festival|tour|gig|show/.test(text);
+      if (activeCategory === 'live') matchesCategory = /live|concert|festival|show|tour|gig/.test(text);
+      if (activeCategory === 'music') matchesCategory = true; // Ticketify currently lists music events.
+      const visible = matchesSearch && matchesCategory;
+      card.hidden = !visible;
+      if (visible && card.closest('#events-list')) visibleCount++;
+    });
+
+    const count = document.getElementById('event-result-count');
+    if (count) count.textContent = `${visibleCount} ${visibleCount === 1 ? 'event' : 'events'}`;
+  }
+
+  if (search) {
+    search.addEventListener('input', () => {
+      if (search.value.trim()) showSection('events-section');
+      filterEvents();
+    });
+    search.addEventListener('keydown', event => {
+      if (event.key === '/') event.preventDefault();
+      if (event.key === 'Escape') { search.value = ''; filterEvents(); }
+    });
+    document.addEventListener('keydown', event => {
+      const tag = document.activeElement?.tagName;
+      if (event.key === '/' && !['INPUT', 'TEXTAREA'].includes(tag)) {
+        event.preventDefault();
+        search.focus();
+      }
+    });
+  }
+
+  categoryButtons.forEach(button => button.addEventListener('click', () => {
+    activeCategory = button.dataset.category || 'all';
+    categoryButtons.forEach(item => item.classList.toggle('active', item === button));
+    filterEvents();
+  }));
+
+  const spotifyShortcut = document.getElementById('spotify-shortcut');
+  spotifyShortcut?.addEventListener('click', event => {
+    event.preventDefault();
+    showSection('artists-section');
+    document.querySelectorAll('.sidebar a').forEach(link => link.classList.toggle('nav-active', link.id === 'artists-link'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  const seeAll = document.getElementById('see-all-events');
+  const heroExplore = document.getElementById('hero-explore-button');
+  [seeAll, heroExplore].forEach(button => button?.addEventListener('click', () => {
+    showSection('events-section');
+    document.querySelectorAll('.sidebar a').forEach(link => link.classList.toggle('nav-active', link.id === 'events-link'));
+    if (button === heroExplore) document.getElementById('event-search')?.focus({ preventScroll: true });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }));
+
+  // Keep the section navigation visually in sync with the active view.
+  const navMap = {
+    'home-link': 'home-section', 'events-link': 'events-section',
+    'artists-link': 'artists-section', 'tracks-link': 'tracks-section',
+    'tickets-link': 'tickets-section', 'profile-link': 'profile-section',
+    'support-link': 'support-section'
+  };
+  Object.entries(navMap).forEach(([linkId, sectionId]) => {
+    document.getElementById(linkId)?.addEventListener('click', () => {
+      document.querySelectorAll('.sidebar a').forEach(link => link.classList.toggle('nav-active', link.id === linkId));
+    });
+  });
+
+  const eventsList = document.getElementById('events-list');
+  if (eventsList && window.MutationObserver) {
+    new MutationObserver(filterEvents).observe(eventsList, { childList: true });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', setupDiscoveryUI);

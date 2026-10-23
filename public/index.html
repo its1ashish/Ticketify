@@ -1,97 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ticketify - Concert Dashboard</title>
-<link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101010"><meta name="description" content="Discover live music, concerts and unforgettable experiences with Ticketify.">
+  <title>Ticketify — Find your next live experience</title>
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body>
-<!-- Sidebar Toggle Button -->
-<button id="sidebar-toggle" class="sidebar-toggle">
-<i class="fas fa-bars"></i>
-</button>
-<div class="dashboard">
-<!-- Sidebar Navigation -->
-<div class="sidebar">
-<!-- Sidebar Close Button -->
-<button id="sidebar-close" class="sidebar-close">
-<i class="fas fa-times"></i>
-</button>
-<div class="logo">Ticketify</div>
-<ul>
-<li><a href="#" id="home-link"><i class="fas fa-home"></i> Home</a></li>
-<li><a href="#" id="events-link"><i class="fas fa-calendar-alt"></i> Events</a></li>
-<li><a href="#" id="artists-link"><i class="fas fa-music"></i> Top Artists</a></li>
-<li><a href="#" id="tracks-link"><i class="fas fa-compact-disc"></i> Top Tracks</a></li>
-<li><a href="#" id="tickets-link"><i class="fas fa-ticket-alt"></i> My Tickets</a></li>
-<li><a href="#" id="profile-link"><i class="fas fa-user"></i> Profile</a></li>
-<li><a href="#" id="support-link"><i class="fas fa-headset"></i> Support</a></li>
-</ul>
-</div>
-<!-- Main Content -->
-<div class="main-content">
-<!-- Home Section (Default) -->
-<div id="home-section" class="content-section active">
-<!-- User Profile Section -->
-<div class="user-profile">
-<img id="user-avatar" src="user_icon.webp" alt="User Avatar" class="avatar">
-<h2 id="username">Welcome, User!</h2>
-
-</div>
-<!-- Upcoming Events Section -->
-<div class="top-events">
-<h3>Upcoming Events</h3>
-<div id="upcoming-events" class="event-list"></div>
-</div>
-</div>
-<!-- Events Section -->
-<div id="events-section" class="content-section">
-<h2>Upcoming Events</h2>
-<div id="events-list" class="event-list horizontal-list"></div>
-</div>
-<!-- Top Artists Section -->
-<div id="artists-section" class="content-section">
-<h2>Top Artists</h2>
-<div id="top-artists" class="event-list"></div>
-</div>
-<!-- Top Tracks Section -->
-<div id="tracks-section" class="content-section">
-<h2>Top Tracks</h2>
-<div id="top-tracks" class="event-list"></div>
-</div>
-<!-- My Tickets Section -->
-<div id="tickets-section" class="content-section">
-<h2>My Tickets</h2>
-<div class="ticket-list">
-<div class="ticket">
-<div id="qrcode"></div>
-<p>Concert Name 1 - 25th Oct 2023</p>
-</div>
-</div>
-</div>
-<!-- Profile Section -->
-<div id="profile-section" class="content-section">
-<h2>Profile</h2>
-<div class="profile-details">
-<img id="profile-avatar" src="user_icon.webp" alt="User Avatar" class="avatar">
-<h3 id="profile-name">John Doe</h3>
-<p id="profile-email">john.doe@example.com</p>
-</div>
-</div>
-<!-- Support Section -->
-<div id="support-section" class="content-section">
-<h2>Support</h2>
-<p>Having trouble? Contact us:</p>
-<ul>
-<li>Email: support@ticketify.com</li>
-<li>Phone: +91 1234567890</li>
-</ul>
-</div>
-</div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-<script src="script.js"></script>
-</body>
-</html>
+<body class="landing-body">
+  <nav class="landing-nav"><a class="brand" href="/"><span class="brand-mark"><i class="fas fa-ticket-alt"></i></span>ticketify<span class="brand-period">.</span></a><div class="landing-nav-links"><a href="#discover">Discover</a><a href="#how-it-works">How it works</a><a class="nav-login" href="/auth/spotify">Log in <i class="fas fa-arrow-up-right-from-square"></i></a></div></nav>
+  <main>
+    <section class="landing-hero">
+      <div class="hero-copy"><span class="eyebrow"><span class="pulse-dot"></span> YOUR CITY. YOUR SOUND. YOUR NIGHT.</span><h1>Life sounds<br>better <span>live.</span></h1><p>From the artists on repeat to the shows you'll never forget. Find your next experience, all in one place.</p><div class="hero-actions"><a class="btn-primary" href="/auth/spotify">Connect with Spotify <i class="fas fa-arrow-right"></i></a><a class="btn-quiet" href="#discover">Explore Ticketify <i class="fas fa-arrow-down"></i></a></div><div class="hero-proof"><div class="proof-icons"><span><i class="fas fa-music"></i></span><span><i class="fas fa-ticket-alt"></i></span><span><i class="fas fa-heart"></i></span></div><p><strong>Your taste, your events.</strong><br>Personalized discovery starts here.</p></div></div>
+      <div class="hero-art" aria-label="Live concert atmosphere"><div class="hero-image-main"></div><div class="hero-image-overlay"></div><div class="floating-tag tag-top"><i class="fas fa-wave-square"></i><span>YOUR SOUNDTRACK<br><strong>Goes live</strong></span></div><div class="floating-tag tag-bottom"><span class="mini-equalizer"><i></i><i></i><i></i><i></i></span><span><strong>Find your people.</strong><br>Make a night of it.</span></div><div class="hero-orbit"></div></div>
+    </section>
+    <section class="landing-discover" id="discover"><div class="section-kicker">THE TICKETIFY EXPERIENCE</div><div class="landing-section-heading"><div><h2>More than a ticket.<br><span>A feeling.</span></h2></div><p>Discover live music that matches your taste, explore events worth going out for, and turn the artists you love into nights you'll remember.</p></div><div class="feature-grid"><article class="feature-card feature-green"><div class="feature-icon"><i class="fab fa-spotify"></i></div><span class="feature-number">01 / PERSONALIZED</span><h3>Your taste<br>takes the stage.</h3><p>Connect Spotify to discover events inspired by your favorite artists.</p><div class="feature-decoration equalizer"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></article><article class="feature-card feature-purple"><div class="feature-icon"><i class="fas fa-compass"></i></div><span class="feature-number">02 / DISCOVERY</span><h3>Find your<br>next obsession.</h3><p>Browse concerts and experiences, from familiar favorites to new discoveries.</p><div class="feature-decoration vinyl"><span></span></div></article><article class="feature-card feature-orange"><div class="feature-icon"><i class="fas fa-ticket-alt"></i></div><span class="feature-number">03 / LIVE IT</span><h3>Make it<br>a night to remember.</h3><p>See event details, venue information, ticket prices and availability.</p><div class="feature-decoration ticket-shape"><i class="fas fa-star"></i></div></article></div></section>
+    <section class="landing-cta" id="how-it-works"><div class="cta-glow"></div><div class="cta-content"><span class="eyebrow"><span class="pulse-dot"></span> READY WHEN YOU ARE</span><h2>Your next favorite<br>memory is <span>out there.</span></h2><p>Connect your Spotify and let the music lead the way.</p><a class="btn-primary" href="/auth/spotify">Get started <i class="fas fa-arrow-right"></i></a></div><div class="cta-symbol"><i class="fas fa-headphones-alt"></i><span>♪</span></div></section>
+  </main><footer class="landing-footer"><a class="brand" href="/"><span class="brand-mark"><i class="fas fa-ticket-alt"></i></span>ticketify<span class="brand-period">.</span></a><p>Made for the moments that move you.</p><span>© 2026 Ticketify</span></footer>
+</body></html>

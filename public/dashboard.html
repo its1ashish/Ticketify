@@ -34,8 +34,18 @@
     
     <!-- Main Content -->
     <div class="main-content">
+      <header class="app-topbar">
+        <div class="topbar-greeting"><span class="eyebrow"><span class="pulse-dot"></span> YOUR NEXT LIVE EXPERIENCE</span><p>Discover something unforgettable.</p></div>
+        <label class="global-search"><i class="fas fa-search"></i><input id="event-search" type="search" placeholder="Search artists, events or venues..." aria-label="Search events"><kbd>/</kbd></label>
+        <a class="topbar-spotify" href="#" id="spotify-shortcut" title="View your Spotify-inspired artist recommendations"><i class="fab fa-spotify"></i><span>Spotify connected</span><span class="connection-dot"></span></a>
+      </header>
       <!-- Home Section (Default) -->
       <div id="home-section" class="content-section active">
+        <section class="dashboard-hero">
+          <div class="dashboard-hero-copy"><span class="hero-label"><i class="fas fa-bolt"></i> CURATED FOR YOUR VIBE</span><h1>Make room for<br><span>the extraordinary.</span></h1><p>Live music. New memories. Your kind of night.</p><button class="hero-explore" id="hero-explore-button" type="button">Explore events <i class="fas fa-arrow-right"></i></button></div>
+          <div class="dashboard-hero-art"><div class="hero-art-glow"></div><div class="hero-art-ring ring-one"></div><div class="hero-art-ring ring-two"></div><div class="hero-art-disc"><i class="fas fa-music"></i></div><span class="art-caption">TURN IT UP<br><strong>LIVE A LITTLE</strong></span></div>
+        </section>
+        <div class="category-strip" aria-label="Explore event types"><span class="category-label">EXPLORE YOUR MOOD</span><button class="category-chip active" data-category="all"> <i class="fas fa-layer-group"></i> All events</button><button class="category-chip" data-category="music"><i class="fas fa-music"></i> Music</button><button class="category-chip" data-category="concert"><i class="fas fa-microphone-alt"></i> Concerts</button><button class="category-chip" data-category="live"><i class="fas fa-bolt"></i> Live shows</button></div>
         <!-- User Profile Section -->
         <div class="user-profile">
           <img id="user-avatar" src="/images/user_icon.webp" alt="User Avatar" class="avatar">
@@ -44,32 +54,33 @@
         
         <!-- Upcoming Events Section -->
         <div class="top-events">
-          <h3>Upcoming Events</h3>
+          <div class="section-heading-row"><div><span class="section-kicker">DON'T MISS OUT</span><h3>Upcoming events</h3></div><button class="text-link" id="see-all-events" type="button">See all <i class="fas fa-arrow-right"></i></button></div>
           <div id="upcoming-events" class="event-list"></div>
         </div>
       </div>
       
       <!-- Events Section -->
       <div id="events-section" class="content-section">
-        <h2>Upcoming Events</h2>
+        <div class="page-heading"><span class="section-kicker">YOUR NEXT NIGHT OUT</span><h2>Explore events</h2><p>Find the artists, places and experiences you'll be talking about.</p></div>
+        <div class="events-toolbar"><span class="events-toolbar-label"><i class="fas fa-sliders-h"></i> All upcoming events</span><span id="event-result-count" class="result-count"></span></div>
         <div id="events-list" class="event-list horizontal-list"></div>
       </div>
       
       <!-- Top Artists Section -->
       <div id="artists-section" class="content-section">
-        <h2>Top Artists</h2>
+        <div class="page-heading"><span class="section-kicker">POWERED BY YOUR LISTENING</span><h2>Your top artists</h2><p>The artists shaping your soundtrack, ready to take the stage.</p></div>
         <div id="top-artists" class="event-list"></div>
       </div>
       
       <!-- Top Tracks Section -->
       <div id="tracks-section" class="content-section">
-        <h2>Top Tracks</h2>
+        <div class="page-heading"><span class="section-kicker">ON REPEAT</span><h2>Your top tracks</h2><p>Your listening favorites, all in one place.</p></div>
         <div id="top-tracks" class="event-list"></div>
       </div>
       
       <!-- My Tickets Section -->
       <div id="tickets-section" class="content-section">
-        <h2>My Tickets</h2>
+        <div class="page-heading"><span class="section-kicker">YOUR PLANS</span><h2>My tickets</h2><p>All your booked experiences, together.</p></div>
         <div class="ticket-list" id="user-tickets">
           <!-- Tickets will be loaded dynamically -->
           <div class="empty-state">No tickets purchased yet</div>
@@ -78,7 +89,7 @@
       
       <!-- Profile Section -->
       <div id="profile-section" class="content-section">
-        <h2>Profile</h2>
+        <div class="page-heading"><span class="section-kicker">YOUR ACCOUNT</span><h2>Your profile</h2><p>Your Ticketify identity and listening-inspired fan profile.</p></div>
         <div class="profile-details">
           <img id="profile-avatar" src="/images/user_icon.webp" alt="User Avatar" class="avatar">
           <h3 id="profile-name">Loading...</h3>
@@ -90,7 +101,7 @@
       
       <!-- Support Section -->
       <div id="support-section" class="content-section">
-        <h2>Support</h2>
+        <div class="page-heading"><span class="section-kicker">WE'RE HERE TO HELP</span><h2>Support</h2><p>Questions, feedback or something we can help with?</p></div>
         <p>Having trouble? Contact us:</p>
         <ul>
           <li>Email: support@ticketify.com</li>
@@ -115,7 +126,7 @@
   </div>
    
   
-  !-- Booking Modal -->
+  <!-- Booking Modal -->
 <div id="booking-modal" class="modal">
   <div class="modal-content">
     <span class="close-modal">&times;</span>
